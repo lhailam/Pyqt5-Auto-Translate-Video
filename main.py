@@ -7,7 +7,7 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from gui import Ui_MainWindow
 
 class MainWindow(QMainWindow):
-    def __init__(self, subtitles):
+    def __init__(self):
         super().__init__()
         self.uic = Ui_MainWindow()
         self.uic.setupUi(self)
@@ -15,11 +15,6 @@ class MainWindow(QMainWindow):
         self.uic.btn_input.clicked.connect(self.open_video_file)
         self.uic.btn_start_stop.clicked.connect(self.toggle_video_play)
 
-        #Sub
-        self.subtitles = subtitles
-        self.current_subtitle_index = 0
-        self.subtitle_timer  = QTimer(self)
-        self.subtitle_timer.timeout.connect(self.update_subtitle)
 
         #Video
         self.video_capture = None
@@ -36,10 +31,6 @@ class MainWindow(QMainWindow):
 
         self.uic.btn_start_stop.setEnabled(False)
         self.uic.lbl_thongbao.setText('')
-
-        self.uic.txtSub.setText('')
-        self.paused = True
-        self.current_time = 0
 
     def update_subtitle(self):
         if self.paused:
@@ -105,6 +96,21 @@ class MainWindow(QMainWindow):
             self.stop_video()
 
     def open_video_file(self):
+
+        #Load sub
+        self.file_path = "data/subtitle.srt"
+        self.subtitles = self.read_srt_file(self.file_path)
+
+
+        #Sub
+        self.current_subtitle_index = 0
+        self.subtitle_timer  = QTimer(self)
+        self.subtitle_timer.timeout.connect(self.update_subtitle)
+
+        self.uic.txtSub.setText('')
+        self.paused = True
+        self.current_time = 0
+
         self.uic.lbl_thongbao.setText('')
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
@@ -131,27 +137,24 @@ class MainWindow(QMainWindow):
     def update_video_frame(self):
         pass
 
-# Đọc file srt
-def read_srt_file(file_path):
-    subtitles = []
-    with open(file_path, 'r', encoding='utf-8') as file:
-        lines = file.read().split('\n\n') 
-        for block in lines:
-            lines = block.strip().split('\n')
-            if len(lines) >= 3:
-                subtitle_num = lines[0]
-                time_info = lines[1]
-                text = ' '.join(lines[2:])
-                subtitles.append((subtitle_num, time_info, text))
-    return subtitles
+    # Đọc file srt
+    def read_srt_file(self, file_path):
+        subtitles = []
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.read().split('\n\n') 
+            for block in lines:
+                lines = block.strip().split('\n')
+                if len(lines) >= 3:
+                    subtitle_num = lines[0]
+                    time_info = lines[1]
+                    text = ' '.join(lines[2:])
+                    subtitles.append((subtitle_num, time_info, text))
+        return subtitles
 
 
 if __name__ == "__main__":
 
-    file_path = "data/subtitle.srt"
-    subtitles = read_srt_file(file_path)
-
     app = QApplication(sys.argv)
-    main_win = MainWindow(subtitles)
+    main_win = MainWindow()
     main_win.show()
     sys.exit(app.exec_())
